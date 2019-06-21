@@ -42,19 +42,54 @@ class PlayerFragment : Fragment(), Player.MetadataListener {
                 .load(BuildConfig.BASE_URL + "assets/" + poster)
                 .into(iv_player_poster)
 
-        if (player != null && player!!.isSameRadio(url)) return
-        if (player != null) player?.stopPlayer()
-        player = Player(context!!, url, this)
-        player?.startPlayer()
+        playRadio(url)
+
+        /**
+         *
+         * TODO: Notification
+         * TODO: Theme
+         *
+         */
+
+        btn_play_pause.setOnClickListener {
+            if (player!!.isPlaying) stopRadio()
+            else playRadio(url)
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        player?.stopPlayer()
-        player?.clearNowPlaying()
+        stopRadio()
     }
 
     override fun onReceivedMetadata(title: String) {
         tv_player_description.text = title
+    }
+
+    private fun playRadio(url: String) {
+        player?.let {
+            if (it.isSameRadio(url)) return
+            if (it.isPlaying) it.stopPlayer()
+        }
+        player = Player(context!!, url, this)
+        player?.startPlayer()
+        swapButton()
+    }
+
+    private fun stopRadio() {
+        player?.let {
+            if (it.isPlaying) {
+                player?.stopPlayer()
+                player?.clearNowPlaying()
+                swapButton()
+            }
+        }
+    }
+
+    private fun swapButton() {
+        btn_play_pause?.setImageDrawable(
+                if (player!!.isPlaying) resources.getDrawable(R.drawable.ic_stop_white_24dp, null)
+                else resources.getDrawable(R.drawable.ic_play_arrow_white_24dp, null)
+        )
     }
 }

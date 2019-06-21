@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/colorPrimaryDark"
+    android:background="@android:color/black"
     tools:context=".fragment.PlayerFragment">
 
     <de.hdodenhof.circleimageview.CircleImageView
@@ -13,8 +13,6 @@
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:src="@tools:sample/avatars" />
@@ -59,10 +57,10 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="8dp"
         android:contentDescription="@string/play_pause"
-        android:src="@drawable/exo_controls_play"
+        android:src="@drawable/ic_stop_white_24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/exo_controls_play" />
+        app:srcCompat="@drawable/ic_stop_white_24dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

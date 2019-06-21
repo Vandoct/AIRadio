@@ -14,6 +14,8 @@ import com.vodyasov.amr.UserAgent
 
 class Player(context: Context, streamUrl: String, private val listener: MetadataListener) : OnNewMetadataListener {
 
+    var isPlaying = true
+
     private var mediaSource: ExtractorMediaSource? = null
     private val metadataManager = AudiostreamMetadataManager.getInstance()
     private val player = ExoPlayerFactory.newSimpleInstance(
@@ -57,6 +59,7 @@ class Player(context: Context, streamUrl: String, private val listener: Metadata
         player.stop()
         player.release()
         metadataManager.stop()
+        isPlaying = false
     }
 
     fun isSameRadio(url: String) = url == NOW_PLAYING
