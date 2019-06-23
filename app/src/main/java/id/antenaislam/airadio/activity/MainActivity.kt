@@ -1,7 +1,6 @@
 package id.antenaislam.airadio.activity
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
@@ -33,13 +32,8 @@ class MainActivity : AppCompatActivity(), RadioAdapter.PlayerListener {
     override fun onRadioClicked(radio: Radio) {
         if (radio.url == Player.NOW_PLAYING) return
 
-        val bundle = Bundle()
-        bundle.putString(PlayerFragment.EXTRA_TITLE, radio.title)
-        bundle.putString(PlayerFragment.EXTRA_URL, radio.url)
-        bundle.putString(PlayerFragment.EXTRA_POSTER, radio.poster)
-
         val fragment = PlayerFragment()
-        fragment.arguments = bundle
+        fragment.radio = radio
 
         val fm = supportFragmentManager.beginTransaction()
         fm.replace(R.id.container_player, fragment)
