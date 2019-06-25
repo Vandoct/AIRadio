@@ -6,13 +6,7 @@ import retrofit2.http.GET
 
 interface RadioService {
 
-    @GET("api/table")
-    fun getAllTableName(): Call<List<String>>
-
     @GET("api/radio")
     fun getAllRadio(): Call<Response>
-
-    @GET("api/radio/anime")
-    fun getAnimeRadio(): Call<Response>
 
 }

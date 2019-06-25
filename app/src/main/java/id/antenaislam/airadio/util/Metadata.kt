@@ -1,180 +1,165 @@
 package id.antenaislam.airadio.util
 
+import android.os.Bundle
+import android.os.Message
 import android.util.Log
-import org.jetbrains.anko.doAsync
-import java.io.BufferedReader
+import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.io.InputStreamReader
+import java.io.InputStream
+import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
-class Metadata {
-    private var metadata: Map<String, String>? = null
-    private var data: Map<String, String>? = null
-    var streamUrl: URL? = null
+class Metadata(private val url: String, listener: MetadataListener) : Runnable {
+    private val handler = MetadataHandler(listener)
 
-    /**
-     * Get artist using stream's title
-     *
-     * @return String
-     * @throws IOException
-     */
-    val artist: String
-        @Throws(IOException::class)
-        get() {
-            data = getMetadata()
-
-            if (!data!!.containsKey("StreamTitle")) return ""
-
-            val streamTitle = data!!["StreamTitle"]
-            val title = streamTitle!!.substring(0, streamTitle.indexOf("-"))
-            return title.trim { it <= ' ' }
-        }
-
-    /**
-     * Get streamTitle
-     *
-     * @return String
-     * @throws IOException
-     */
-    val streamTitle: String
-        @Throws(IOException::class)
-        get() {
-            data = getMetadata()
-
-            return if (!data!!.containsKey("StreamTitle")) "" else data!!["StreamTitle"].toString()
-
-        }
-
-    /**
-     * Get title using stream's title
-     *
-     * @return String
-     * @throws IOException
-     */
-    val title: String
-        @Throws(IOException::class)
-        get() {
-            data = getMetadata()
-
-            if (!data!!.containsKey("StreamTitle")) return ""
-
-            val streamTitle = data!!["StreamTitle"]
-            val artist = streamTitle!!.substring(streamTitle.indexOf("-") + 1)
-            return artist.trim { it <= ' ' }
-        }
-
-    private fun parseMetadata(metaString: String): Map<String, String> {
-        val metadata = HashMap<String, String>()
-        val metaParts = metaString.split(";".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        val p = Pattern.compile("^([a-zA-Z]+)='([^']*)'$")
-        var m: Matcher
-        for (i in metaParts.indices) {
-            m = p.matcher(metaParts[i])
-            if (m.find()) {
-                metadata[m.group(1) as String] = m.group(2) as String
-            }
-        }
-
-        return metadata
+    companion object {
+        const val TAG = "Metadata"
+        const val WINDOWS_MEDIA_PLAYER = "Windows-Media-Player/11.0.5721.5145"
+        const val VLC = "vlc 1.1.0-git-20100330-0003"
+        const val AIMP = "BASS/2.4"
+        const val MOZILLA = "Mozilla/5.0 (Windows NT 6.3; WOW64; rv:36.0) Gecko/20100101 Firefox/36.0"
+        const val CHROME = "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.115 Safari/537.36"
+        const val OPERA = "Opera/9.80 (Windows NT 6.2; WOW64) Presto/2.12.388 Version/12.17"
+        const val SAFARI = "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/534.57.2 (KHTML, like Gecko) Version/5.1.7 Safari/534.57.2"
+        const val IE = "Mozilla/5.0 (Windows NT 6.3; WOW64; Trident/7.0; ASU2JS; rv:11.0) like Gecko"
+        const val BR = "icy-br"
+        const val NAME = "icy-name"
+        const val GENRE = "icy-genre"
+        const val INFO = "ice-audio-info"
+        const val DESC = "icy-description"
+        const val ACTION_CONNECTION_FAILURE = 0
+        const val ACTION_NEW_TITLE = 1
+        const val ACTION_NO_TITLE = 2
     }
 
-    @Throws(IOException::class)
-    fun getMetadata(): Map<String, String>? {
-        if (metadata == null) {
-            refreshMeta()
-        }
-
-        return metadata
+    override fun run() {
+        retrieveMetadata()
     }
 
-    @Synchronized
-    @Throws(IOException::class)
-    fun refreshMeta() {
-        doAsync {
-            retreiveMetadata()
+    private fun retrieveMetadata() {
+        val urlConnection: HttpURLConnection
+
+        try {
+            urlConnection = URL(url).openConnection() as HttpURLConnection
+            urlConnection.setRequestProperty("User-Agent", VLC)
+            urlConnection.setRequestProperty("Icy-MetaData", "1")
+            urlConnection.connect()
+        } catch (e: IOException) {
+            val msg = Message.obtain()
+            msg.what = ACTION_CONNECTION_FAILURE
+            handler.sendMessage(msg)
+
+            Log.e(TAG, "Failed to open connection")
+            e.printStackTrace()
+            return
         }
-    }
 
-    @Synchronized
-    @Throws(IOException::class)
-    private fun retreiveMetadata() {
-        val con = this.streamUrl!!.openConnection()
-        con.setRequestProperty("Icy-MetaData", "1")
-        con.setRequestProperty("Connection", "close")
-        con.setRequestProperty("Accept", null)
-        con.connect()
+        val headers = urlConnection.headerFields
+        val headersData = Bundle()
 
-        var metaDataOffset = 0
-        val headers = con.headerFields
-        val stream = con.getInputStream()
+        headersData.putStringArrayList(NAME,
+                if (headers[NAME] != null) ArrayList(headers[NAME]!!) else ArrayList())
+        headersData.putStringArrayList(DESC,
+                if (headers[DESC] != null) ArrayList(headers[DESC]!!) else ArrayList())
+        headersData.putStringArrayList(BR,
+                if (headers[BR] != null) ArrayList(headers[BR]!!) else ArrayList())
+        headersData.putStringArrayList(GENRE,
+                if (headers[GENRE] != null) ArrayList(headers[GENRE]!!) else ArrayList())
+        headersData.putStringArrayList(INFO,
+                if (headers[INFO] != null) ArrayList(headers[INFO]!!) else ArrayList())
 
-        if (headers.containsKey("icy-metaint")) {
-            // Headers are sent via HTTP
-            metaDataOffset = Integer.parseInt(headers["icy-metaint"]!![0])
-        } else {
-            // Headers are sent within a stream
-            val strHeaders = StringBuilder()
+        if (!headers.containsKey("icy-metaint")) {
+            val msg = Message.obtain()
+            msg.what = ACTION_NO_TITLE
+            handler.sendMessage(msg)
 
-            while (true) {
-                val c = stream.read().toChar().toInt()
+            Log.i(TAG, "IceCast server doesn't support metadata")
+            urlConnection.disconnect()
+            return
+        }
 
-                if (c != -1) {
-                    strHeaders.append(c)
-                    if (strHeaders.length > 5 && strHeaders.substring(strHeaders.length - 4, strHeaders.length) == "\r\n\r\n") {
-                        break
+        val icyMetaInt = Integer.parseInt(urlConnection.getHeaderField("icy-metaint"))
+        val stream: InputStream
+
+        try {
+            stream = urlConnection.inputStream
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.e(TAG, "InputStream can not be created")
+            urlConnection.disconnect()
+            return
+        }
+
+        val baos = ByteArrayOutputStream()
+
+        try {
+            while (!Thread.interrupted()) {
+                var skipped = stream.skip(icyMetaInt.toLong())
+
+                while (skipped != icyMetaInt.toLong()) {
+                    skipped += stream.skip(icyMetaInt - skipped)
+                }
+
+                val symbolLength = stream.read()
+                val metaDataLength = symbolLength * 16
+
+                if (metaDataLength > 0) {
+                    for (i in 0 until metaDataLength) {
+                        val metaDataSymbol = stream.read()
+
+                        if (metaDataSymbol > 0) baos.write(metaDataSymbol)
                     }
-                } else break
-            }
 
-            // Match headers to get metadata offset within a stream
-            val p = Pattern.compile("\\r\\n(icy-metaint):\\s*(.*)\\r\\n")
-            val m = p.matcher(strHeaders.toString())
-            if (m.find()) {
-                metaDataOffset = Integer.parseInt(m.group(2)!!)
+                    val result = parseMetadata(baos.toString())
+                    baos.reset()
+
+                    if (result == "") {
+                        val msg = Message.obtain()
+                        msg.what = ACTION_NO_TITLE
+                        handler.sendMessage(msg)
+
+                        return
+                    }
+
+                    val msg = Message.obtain()
+                    msg.what = ACTION_NEW_TITLE
+                    msg.obj = result
+                    handler.sendMessage(msg)
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Log.e(TAG, "Thread Interrupted!")
+        } finally {
+            try {
+                baos.close()
+                stream.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
         }
 
-        // In case no data was sent
-        if (metaDataOffset == 0) return
+        urlConnection.disconnect()
+    }
 
-        // Read metadata
-        var count = 0
-        var metaDataLength = 4080 // 4080 is the max length
-        val metaData = StringBuilder()
-        // Stream position should be either at the beginning or right after headers
+    private fun parseMetadata(result: String): String {
+        var temp = result
+                .replace("StreamTitle=", "")
+                .replace("StreamUrl=", "")
+                .replace("'".toRegex(), "")
+                .replace(";".toRegex(), "")
 
-        while (true) {
-            val b = stream.read()
-
-            if (b != -1) {
-                count++
-
-                // Length of the metadata
-                if (count == metaDataOffset + 1) {
-                    metaDataLength = b * 16
-                }
-
-                val inData = count > metaDataOffset + 1 && count < metaDataOffset + metaDataLength
-
-                if (inData && b != 0) {
-                    metaData.append(b.toChar())
-                }
-
-                if (count > metaDataOffset + metaDataLength) {
-                    break
-                }
-            } else break
+        if (temp.isNotEmpty() && temp.substring(temp.length - 1) == "-") {
+            temp = temp.substring(0, temp.length - 1).trim()
         }
 
-        // Set the data
-        metadata = parseMetadata(metaData.toString())
+        return temp
+    }
 
-        // Close
-        stream.close()
+    interface MetadataListener {
+        fun onConnectionFailed()
+        fun onNewTitleReceived(title: String)
+        fun onNoTitleAvailable()
     }
 }

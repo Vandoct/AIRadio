@@ -8,16 +8,12 @@ import com.google.android.exoplayer2.ExoPlayerFactory
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
-import com.vodyasov.amr.AudiostreamMetadataManager
-import com.vodyasov.amr.OnNewMetadataListener
-import com.vodyasov.amr.UserAgent
 
-class Player(context: Context, streamUrl: String, private val listener: MetadataListener) : OnNewMetadataListener {
-
+class Player(context: Context, streamUrl: String, private val listener: PlayerListener) : Metadata.MetadataListener {
     var isPlaying = true
 
     private var mediaSource: ExtractorMediaSource? = null
-    private val metadataManager = AudiostreamMetadataManager.getInstance()
+    private val thread: Thread
     private val player = ExoPlayerFactory.newSimpleInstance(
             DefaultRenderersFactory(context),
             DefaultTrackSelector(), DefaultLoadControl())
@@ -36,19 +32,20 @@ class Player(context: Context, streamUrl: String, private val listener: Metadata
                 DefaultHttpDataSourceFactory("exoplayer"))
                 .createMediaSource(url)
 
-        metadataManager.setUri(url)
-                .setOnNewMetadataListener(this)
-                .setUserAgent(UserAgent.VLC)
-                .start()
+        thread = Thread(Metadata(streamUrl, this))
+        thread.start()
     }
 
-    override fun onNewHeaders(stringUri: String?, name: MutableList<String>?, desc: MutableList<String>?, br: MutableList<String>?, genre: MutableList<String>?, info: MutableList<String>?) {
+    override fun onConnectionFailed() {
+        listener.onConnectionFailed()
     }
 
-    override fun onNewStreamTitle(stringUri: String?, streamTitle: String?) {
-        streamTitle?.let {
-            listener.onReceivedMetadata(it)
-        }
+    override fun onNewTitleReceived(title: String) {
+        listener.onReceivedMetadata(title)
+    }
+
+    override fun onNoTitleAvailable() {
+        listener.onNoTitleAvailable()
     }
 
     fun startPlayer() {
@@ -56,9 +53,9 @@ class Player(context: Context, streamUrl: String, private val listener: Metadata
     }
 
     fun stopPlayer() {
+        thread.interrupt()
         player.stop()
         player.release()
-        metadataManager.stop()
         isPlaying = false
     }
 
@@ -68,7 +65,9 @@ class Player(context: Context, streamUrl: String, private val listener: Metadata
         NOW_PLAYING = ""
     }
 
-    interface MetadataListener {
+    interface PlayerListener {
+        fun onConnectionFailed()
         fun onReceivedMetadata(title: String)
+        fun onNoTitleAvailable()
     }
 }

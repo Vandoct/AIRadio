@@ -42,6 +42,12 @@ dependencies {
     // ViewModel and LiveData
     implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
 
+    // Card view
+    implementation 'androidx.cardview:cardview:1.0.0'
+
+    // Recycler view
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.6.0'
 
@@ -51,7 +57,6 @@ dependencies {
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.9.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
-    implementation 'androidx.recyclerview:recyclerview:1.0.0'
 
     // Circle image view
     implementation 'de.hdodenhof:circleimageview:3.0.0'
@@ -62,7 +67,4 @@ dependencies {
     // Anko
     implementation "org.jetbrains.anko:anko-commons:0.10.8"
 
-    // Metadata Retriever
-    implementation 'com.vodyasov:amr:0.5'
-    implementation 'androidx.cardview:cardview:1.0.0'
 }

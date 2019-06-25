@@ -18,7 +18,7 @@ import id.antenaislam.airadio.util.Player
 import kotlinx.android.synthetic.main.fragment_player.*
 
 
-class PlayerFragment : Fragment(), Player.MetadataListener {
+class PlayerFragment : Fragment(), Player.PlayerListener {
     var radio: Radio? = null
 
     private val broadcast = Intent()
@@ -68,9 +68,22 @@ class PlayerFragment : Fragment(), Player.MetadataListener {
         stopRadio()
     }
 
-    override fun onReceivedMetadata(title: String) {
-        tv_player_description.text = title
+    override fun onConnectionFailed() {
+        tv_player_description?.text = getString(R.string.failed_to_connect)
+        broadcastMetadata(getString(R.string.failed_to_connect))
+    }
 
+    override fun onReceivedMetadata(title: String) {
+        tv_player_description?.text = title
+        broadcastMetadata(title)
+    }
+
+    override fun onNoTitleAvailable() {
+        tv_player_description?.text = getString(R.string.no_title)
+        broadcastMetadata(getString(R.string.no_title))
+    }
+
+    private fun broadcastMetadata(title: String) {
         broadcast.action = NotificationService.FILTER_METADATA
         broadcast.putExtra(NotificationService.FILTER_METADATA, title)
         context?.sendBroadcast(broadcast)
@@ -96,7 +109,7 @@ class PlayerFragment : Fragment(), Player.MetadataListener {
             player?.startPlayer()
             swapButton()
 
-            startNotificationService(it.title, "")
+            startNotificationService(it.title, getString(R.string.connecting))
         }
     }
 
