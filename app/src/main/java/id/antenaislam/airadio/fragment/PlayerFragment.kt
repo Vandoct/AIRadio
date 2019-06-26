@@ -1,9 +1,13 @@
 package id.antenaislam.airadio.fragment
 
 
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,16 +28,18 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
     private val broadcast = Intent()
     private var player: Player? = null
     private lateinit var service: Intent
+    private lateinit var receiver: BroadcastReceiver
 
     companion object {
         const val EXTRA_NAME = "extra_name"
         const val EXTRA_TITLE = "extra_title"
+        const val FILTER_ACTION = "action"
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-
+        Log.e("PLAYER", "onCreateView")
         return inflater.inflate(R.layout.fragment_player, container, false)
     }
 
@@ -41,6 +47,9 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
         super.onViewCreated(view, savedInstanceState)
 
         service = Intent(context!!, NotificationService::class.java)
+        receiver = PlayerReceiver()
+
+        context?.registerReceiver(receiver, IntentFilter(FILTER_ACTION))
 
         tv_player_title.text = radio?.title
 
@@ -52,20 +61,20 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
 
         /**
          *
-         * TODO: Notification Action
          * TODO: Theme
          *
          */
 
         btn_play_pause.setOnClickListener {
-            if (player!!.isPlaying) stopRadio()
+            if (player!!.isPlaying) stopRadioAndNotification()
             else playRadio(radio)
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        stopRadio()
+        stopRadioAndNotification()
+        context?.unregisterReceiver(receiver)
     }
 
     override fun onConnectionFailed() {
@@ -80,13 +89,9 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
 
     override fun onNoTitleAvailable() {
         tv_player_description?.text = getString(R.string.no_title)
-        broadcastMetadata(getString(R.string.no_title))
-    }
-
-    private fun broadcastMetadata(title: String) {
-        broadcast.action = NotificationService.FILTER_METADATA
-        broadcast.putExtra(NotificationService.FILTER_METADATA, title)
-        context?.sendBroadcast(broadcast)
+        context?.let {
+            broadcastMetadata(it.resources.getString(R.string.no_title))
+        }
     }
 
     private fun startNotificationService(radioName: String, title: String) {
@@ -121,10 +126,11 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
                 swapButton()
             }
         }
+    }
 
-        broadcast.action = NotificationService.FILTER_STOP
-        context?.sendBroadcast(broadcast)
-        context?.stopService(service)
+    private fun stopRadioAndNotification() {
+        stopRadio()
+        broadcastStopNotification()
     }
 
     private fun swapButton() {
@@ -132,5 +138,28 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
                 if (player!!.isPlaying) resources.getDrawable(R.drawable.ic_stop_white_24dp, null)
                 else resources.getDrawable(R.drawable.ic_play_arrow_white_24dp, null)
         )
+    }
+
+    private fun broadcastMetadata(title: String) {
+        broadcast.action = NotificationService.FILTER_METADATA
+        broadcast.putExtra(NotificationService.FILTER_METADATA, title)
+        context?.sendBroadcast(broadcast)
+    }
+
+    private fun broadcastStopNotification() {
+        broadcast.action = NotificationService.FILTER_STOP
+        context?.sendBroadcast(broadcast)
+        context?.stopService(service)
+    }
+
+    inner class PlayerReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            intent?.let {
+                if (it.action == FILTER_ACTION) {
+                    if (player!!.isPlaying) stopRadio()
+                    else playRadio(radio)
+                }
+            }
+        }
     }
 }
