@@ -7,7 +7,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -39,7 +38,6 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
         // Inflate the layout for this fragment
-        Log.e("PLAYER", "onCreateView")
         return inflater.inflate(R.layout.fragment_player, container, false)
     }
 
@@ -58,12 +56,6 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
                 .into(iv_player_poster)
 
         playRadio(radio)
-
-        /**
-         *
-         * TODO: Theme
-         *
-         */
 
         btn_play_pause.setOnClickListener {
             if (player!!.isPlaying) stopRadioAndNotification()

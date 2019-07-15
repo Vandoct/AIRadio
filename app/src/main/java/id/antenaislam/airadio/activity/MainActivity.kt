@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity(), RadioAdapter.PlayerListener {
     companion object {
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
+        const val TAG_PLAYER = "player"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +54,7 @@ class MainActivity : AppCompatActivity(), RadioAdapter.PlayerListener {
         fragment.radio = radio
 
         val fm = supportFragmentManager.beginTransaction()
-        fm.replace(R.id.container_player, fragment)
+        fm.replace(R.id.container_player, fragment, TAG_PLAYER)
         fm.commit()
     }
 
@@ -74,10 +75,19 @@ class MainActivity : AppCompatActivity(), RadioAdapter.PlayerListener {
                 item.setIcon(R.drawable.ic_dark_theme_24dp)
                 preference.setTheme(THEME_DARK)
                 this.recreate()
+
+                val fm = supportFragmentManager.beginTransaction()
+                fm.remove(supportFragmentManager.findFragmentByTag(TAG_PLAYER)!!)
+                fm.commit()
+
             } else {
                 item.setIcon(R.drawable.ic_light_theme_24dp)
                 preference.setTheme(THEME_LIGHT)
                 this.recreate()
+
+                val fm = supportFragmentManager.beginTransaction()
+                fm.remove(supportFragmentManager.findFragmentByTag("player")!!)
+                fm.commit()
             }
         }
         return super.onOptionsItemSelected(item)

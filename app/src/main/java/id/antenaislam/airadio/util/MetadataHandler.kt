@@ -5,7 +5,7 @@ import android.os.Message
 import java.lang.ref.WeakReference
 
 class MetadataHandler(listener: Metadata.MetadataListener) : Handler() {
-    private val ref = WeakReference<Metadata.MetadataListener>(listener)
+    private val ref = WeakReference(listener)
 
     override fun handleMessage(msg: Message) {
         super.handleMessage(msg)
