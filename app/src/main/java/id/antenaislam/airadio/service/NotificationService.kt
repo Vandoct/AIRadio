@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.widget.RemoteViews
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import id.antenaislam.airadio.R
 import id.antenaislam.airadio.fragment.PlayerFragment
 
@@ -75,7 +76,8 @@ class NotificationService : Service() {
 
 
         builder = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_play_arrow_white_24dp)
+                .setSmallIcon(R.drawable.ic_radio_notification)
+                .setColor(ContextCompat.getColor(this, R.color.darkColorAccent))
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(notificationLayout)
                 .setCustomBigContentView(notificationLayoutExpanded)
