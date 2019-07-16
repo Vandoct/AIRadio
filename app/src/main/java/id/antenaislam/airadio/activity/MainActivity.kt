@@ -75,21 +75,19 @@ class MainActivity : AppCompatActivity(), RadioAdapter.PlayerListener {
                 item.setIcon(R.drawable.ic_dark_theme_24dp)
                 preference.setTheme(THEME_DARK)
                 this.recreate()
-
-                val fm = supportFragmentManager.beginTransaction()
-                fm.remove(supportFragmentManager.findFragmentByTag(TAG_PLAYER)!!)
-                fm.commit()
-
             } else {
                 item.setIcon(R.drawable.ic_light_theme_24dp)
                 preference.setTheme(THEME_LIGHT)
                 this.recreate()
-
-                val fm = supportFragmentManager.beginTransaction()
-                fm.remove(supportFragmentManager.findFragmentByTag("player")!!)
-                fm.commit()
             }
         }
+
+        supportFragmentManager.findFragmentByTag(TAG_PLAYER)?.let {
+            val fm = supportFragmentManager.beginTransaction()
+            fm.remove(it)
+            fm.commit()
+        }
+
         return super.onOptionsItemSelected(item)
     }
 }
