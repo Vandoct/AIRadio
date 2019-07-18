@@ -10,8 +10,6 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory
 
 class Player(context: Context, streamUrl: String, private val listener: PlayerListener) : Metadata.MetadataListener {
-    var isPlaying = true
-
     private var mediaSource: ExtractorMediaSource? = null
     private val thread: Thread
     private val player = ExoPlayerFactory.newSimpleInstance(
@@ -20,6 +18,7 @@ class Player(context: Context, streamUrl: String, private val listener: PlayerLi
 
     companion object {
         var NOW_PLAYING = ""
+        var IS_PLAYING = false
     }
 
     init {
@@ -50,13 +49,14 @@ class Player(context: Context, streamUrl: String, private val listener: PlayerLi
 
     fun startPlayer() {
         player.prepare(mediaSource, true, false)
+        IS_PLAYING = true
     }
 
     fun stopPlayer() {
         thread.interrupt()
         player.stop()
         player.release()
-        isPlaying = false
+        IS_PLAYING = false
     }
 
     fun isSameRadio(url: String) = url == NOW_PLAYING

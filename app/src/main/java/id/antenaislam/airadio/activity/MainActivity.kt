@@ -90,4 +90,12 @@ class MainActivity : AppCompatActivity(), RadioAdapter.PlayerListener {
 
         return super.onOptionsItemSelected(item)
     }
+
+    override fun onBackPressed() {
+        if (Player.IS_PLAYING) {
+            moveTaskToBack(true)
+        } else {
+            super.onBackPressed()
+        }
+    }
 }

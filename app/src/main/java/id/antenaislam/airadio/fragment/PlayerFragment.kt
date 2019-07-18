@@ -58,7 +58,7 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
         playRadio(radio)
 
         btn_play_pause.setOnClickListener {
-            if (player!!.isPlaying) stopRadioAndNotification()
+            if (Player.IS_PLAYING) stopRadioAndNotification()
             else playRadio(radio)
         }
     }
@@ -100,7 +100,7 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
         radio?.let {
             player?.let { player ->
                 if (player.isSameRadio(it.url)) return
-                if (player.isPlaying) player.stopPlayer()
+                if (Player.IS_PLAYING) player.stopPlayer()
             }
             player = Player(context!!, it.url, this)
             player?.startPlayer()
@@ -111,12 +111,10 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
     }
 
     private fun stopRadio() {
-        player?.let {
-            if (it.isPlaying) {
-                player?.stopPlayer()
-                player?.clearNowPlaying()
-                swapButton()
-            }
+        if (Player.IS_PLAYING) {
+            player?.stopPlayer()
+            player?.clearNowPlaying()
+            swapButton()
         }
     }
 
@@ -127,7 +125,7 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
 
     private fun swapButton() {
         btn_play_pause?.setImageDrawable(
-                if (player!!.isPlaying) resources.getDrawable(R.drawable.ic_stop_white_24dp, null)
+                if (Player.IS_PLAYING) resources.getDrawable(R.drawable.ic_stop_white_24dp, null)
                 else resources.getDrawable(R.drawable.ic_play_arrow_white_24dp, null)
         )
     }
@@ -148,7 +146,7 @@ class PlayerFragment : Fragment(), Player.PlayerListener {
         override fun onReceive(context: Context?, intent: Intent?) {
             intent?.let {
                 if (it.action == FILTER_ACTION) {
-                    if (player!!.isPlaying) stopRadio()
+                    if (Player.IS_PLAYING) stopRadio()
                     else playRadio(radio)
                 }
             }

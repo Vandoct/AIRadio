@@ -35,6 +35,5 @@
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
         android:contentDescription="@string/play_pause"
-        android:src="@drawable/ic_stop_white_24dp"
-        android:tint="@android:color/black" />
+        android:src="@drawable/ic_stop_black_24dp" />
 </RelativeLayout>

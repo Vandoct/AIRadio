@@ -32,6 +32,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "BASE_URL", '"https://radio.antenaislam.com/"')
         resConfigs "en"
+        multiDexEnabled = true
     }
     signingConfigs {
         release {
@@ -46,6 +47,7 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            multiDexEnabled = true
             android.applicationVariants.all { variant ->
                 variant.outputs.all {
                     outputFileName = "AIRadio-${variant.versionName}.apk"

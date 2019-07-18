@@ -12,10 +12,11 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import id.antenaislam.airadio.R
+import id.antenaislam.airadio.activity.MainActivity
 import id.antenaislam.airadio.fragment.PlayerFragment
+import id.antenaislam.airadio.util.Player
 
 class NotificationService : Service() {
-    private var isPlaying = true
     private lateinit var receiver: BroadcastReceiver
     private lateinit var builder: NotificationCompat.Builder
     private lateinit var pending: PendingIntent
@@ -74,13 +75,23 @@ class NotificationService : Service() {
         notificationLayoutExpanded.setTextViewText(R.id.tv_notification_title, title)
         notificationLayoutExpanded.setOnClickPendingIntent(R.id.btn_notification_play_pause, pending)
 
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            notificationLayout.setImageViewResource(R.id.btn_notification_play_pause,
+                    R.drawable.ic_stop_white_24dp)
+            notificationLayoutExpanded.setImageViewResource(R.id.btn_notification_play_pause,
+                    R.drawable.ic_stop_white_24dp)
+        }
+
+        val intent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 
         builder = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_radio_notification)
+                .setSmallIcon(R.drawable.ic_radio_notification_white)
                 .setColor(ContextCompat.getColor(this, R.color.darkColorAccent))
                 .setStyle(NotificationCompat.DecoratedCustomViewStyle())
                 .setCustomContentView(notificationLayout)
                 .setCustomBigContentView(notificationLayoutExpanded)
+                .setContentIntent(pendingIntent)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startCustomNotification()
 
@@ -110,19 +121,35 @@ class NotificationService : Service() {
     }
 
     private fun swapButton() {
-        if (isPlaying) {
-            notificationLayout.setImageViewResource(R.id.btn_notification_play_pause, R.drawable.ic_play_arrow_white_24dp)
-            notificationLayoutExpanded.setImageViewResource(R.id.btn_notification_play_pause, R.drawable.ic_play_arrow_white_24dp)
+        if (Player.IS_PLAYING) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                notificationLayout.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_play_arrow_white_24dp)
+                notificationLayoutExpanded.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_play_arrow_white_24dp)
+            } else {
+                notificationLayout.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_play_arrow_black_24dp)
+                notificationLayoutExpanded.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_play_arrow_black_24dp)
+            }
         } else {
-            notificationLayout.setImageViewResource(R.id.btn_notification_play_pause, R.drawable.ic_stop_white_24dp)
-            notificationLayoutExpanded.setImageViewResource(R.id.btn_notification_play_pause, R.drawable.ic_stop_white_24dp)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+                notificationLayout.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_stop_white_24dp)
+                notificationLayoutExpanded.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_stop_white_24dp)
+            } else {
+                notificationLayout.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_stop_black_24dp)
+                notificationLayoutExpanded.setImageViewResource(R.id.btn_notification_play_pause,
+                        R.drawable.ic_stop_black_24dp)
+            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startCustomNotification()
 
         startForeground(NOTIFICATION_ID, builder.build())
-
-        isPlaying = !isPlaying
     }
 
     inner class NotificationListener : BroadcastReceiver() {
